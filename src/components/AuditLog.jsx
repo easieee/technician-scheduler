@@ -30,8 +30,9 @@ export default function AuditLog() {
               <div className="min-w-0">
                 <p className="text-slate-700 text-xs font-semibold">{log.title}</p>
                 <p className="text-slate-400 text-[11px] mt-0.5 leading-relaxed">{log.description}</p>
-                <p className="text-slate-300 text-[10px] mt-1">
-                  {format(new Date(log.timestamp), 'hh:mm aa')}
+                <p className="text-slate-300 text-[10px] mt-1 flex items-center gap-1.5">
+                  {format(new Date(log.timestamp), 'MMM d · hh:mm aa')}
+                  {log.user && <><span className="opacity-50">·</span><span className="text-slate-400 font-medium">{log.user}</span></>}
                 </p>
               </div>
             </div>

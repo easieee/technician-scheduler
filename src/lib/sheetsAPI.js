@@ -18,7 +18,8 @@ export const SHEET_HEADERS = {
     'date', 'startTime', 'endTime', 'technicianIds',
     'createdBy', 'createdByEmail', 'createdAt', 'completedAt',
     'isBackJob', 'originalJobId'
-  ]
+  ],
+  AuditLogs: ['id', 'type', 'title', 'description', 'timestamp', 'user', 'userEmail']
 };
 
 async function apiFetch(url, options = {}, token) {

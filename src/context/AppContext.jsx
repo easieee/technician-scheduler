@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useRef } from 'react';
 import toast from 'react-hot-toast';
 import {
   getAllRows,
@@ -19,15 +19,31 @@ export function AppProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [auditLogs, setAuditLogs] = useState([]);
 
+  // Always points to the latest user without causing stale closures in addLog
+  const userRef = useRef(null);
+  useEffect(() => { userRef.current = user; }, [user]);
+
   const addLog = useCallback((type, title, description) => {
-    setAuditLogs(prev => [{
+    const logEntry = {
       id: Date.now().toString(36),
       type,
       title,
       description,
-      timestamp: new Date()
-    }, ...prev].slice(0, 60));
-  }, []);
+      timestamp: new Date(),
+      user:      userRef.current?.name  || '',
+      userEmail: userRef.current?.email || '',
+    };
+    setAuditLogs(prev => [logEntry, ...prev].slice(0, 200));
+
+    // Persist to AuditLogs sheet silently
+    const token = userRef.current?.accessToken;
+    if (token && spreadsheetId) {
+      appendRow(spreadsheetId, 'AuditLogs', {
+        ...logEntry,
+        timestamp: logEntry.timestamp.toISOString(),
+      }, token).catch(() => {});
+    }
+  }, [spreadsheetId]);
 
   useEffect(() => {
     addLog('system', 'System Initialized', 'Technician Scheduler loaded successfully.');
@@ -49,14 +65,23 @@ export function AppProvider({ children }) {
       if (token) {
         await initializeSheets(spreadsheetId, token);
       }
-      const [techs, orders, history] = await Promise.all([
+      const [techs, orders, history, logs] = await Promise.all([
         getAllRows(spreadsheetId, 'Technicians', token),
         getAllRows(spreadsheetId, 'JobOrders', token),
-        getAllRows(spreadsheetId, 'JobHistory', token)
+        getAllRows(spreadsheetId, 'JobHistory', token),
+        getAllRows(spreadsheetId, 'AuditLogs', token)
       ]);
       setTechnicians(techs);
       setJobOrders(orders);
       setJobHistory(history);
+      // Sort persisted logs newest-first, cap at 200
+      setAuditLogs(
+        logs
+          .filter(l => l.id)
+          .map(l => ({ ...l, timestamp: new Date(l.timestamp) }))
+          .sort((a, b) => b.timestamp - a.timestamp)
+          .slice(0, 200)
+      );
     } catch (err) {
       if (token && publicReadMode) {
         try {
