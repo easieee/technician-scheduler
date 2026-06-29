@@ -90,7 +90,6 @@ export default function TopBar({ calendarDate, onPrev, onNext, onToday, onAddTec
             title="Previous day"
           >
             <ChevronLeft className="h-4 w-4" />
-       w-4" />
           </button>
 
           {/* Date label — click to jump back to today */}
