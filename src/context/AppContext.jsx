@@ -19,6 +19,13 @@ export function AppProvider({ children }) {
   const [loading, setLoading] = useState(false);
   const [auditLogs, setAuditLogs] = useState([]);
 
+  // Declare constants first so they are available to all hooks below
+  const spreadsheetId = import.meta.env.VITE_SPREADSHEET_ID;
+  const readOnlyMode = String(import.meta.env.VITE_READ_ONLY_MODE ?? 'false').toLowerCase() === 'true';
+  const publicReadMode = String(import.meta.env.VITE_PUBLIC_READ_MODE ?? 'true').toLowerCase() === 'true';
+  const canManageData = !!user && !readOnlyMode;
+  const SESSION_KEY = 'techscheduler_session';
+
   // Always points to the latest user without causing stale closures in addLog
   const userRef = useRef(null);
   useEffect(() => { userRef.current = user; }, [user]);
@@ -48,12 +55,6 @@ export function AppProvider({ children }) {
   useEffect(() => {
     addLog('system', 'System Initialized', 'Technician Scheduler loaded successfully.');
   }, []);
-
-  const spreadsheetId = import.meta.env.VITE_SPREADSHEET_ID;
-  const readOnlyMode = String(import.meta.env.VITE_READ_ONLY_MODE ?? 'false').toLowerCase() === 'true';
-  const publicReadMode = String(import.meta.env.VITE_PUBLIC_READ_MODE ?? 'true').toLowerCase() === 'true';
-  const canManageData = !!user && !readOnlyMode;
-  const SESSION_KEY = 'techscheduler_session';
 
   /* ─────────────────────────────── DATA LOAD ─────────────────────────────── */
 
